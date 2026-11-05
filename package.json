@@ -1,0 +1,20 @@
+{
+  "name": "yoyu-ledger",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
+    "jsqr": "1.4.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
+    "esbuild": "0.27.4",
+    "fake-indexeddb": "6.2.4",
+    "qrcode": "1.5.4"
+  }
+}

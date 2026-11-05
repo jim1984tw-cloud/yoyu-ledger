@@ -1,0 +1,12 @@
+import {build} from 'esbuild';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {validateCloudConfig} from '../dist/cloud-config.mjs';
+await mkdir('dist/vendor',{recursive:true});
+await build({stdin:{contents:"export {createClient} from '@supabase/supabase-js';",resolveDir:process.cwd()},outfile:'dist/vendor/supabase.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'eof'});
+await build({stdin:{contents:"import jsQR from 'jsqr'; export default jsQR;",resolveDir:process.cwd()},outfile:'dist/vendor/jsqr.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'eof'});
+const url=(process.env.SUPABASE_URL||'').trim(),key=(process.env.SUPABASE_PUBLISHABLE_KEY||'').trim();
+if(Boolean(url)!==Boolean(key))throw Error('SUPABASE_URL 與 SUPABASE_PUBLISHABLE_KEY 必須一起設定');
+const config=url?validateCloudConfig({url,publishableKey:key,provider:process.env.SUPABASE_AUTH_PROVIDER||'github'}):null;
+await writeFile('dist/cloud-config.json',JSON.stringify(config,null,2)+'\n');
+await writeFile('dist/.nojekyll','');
+console.log(config?'網站已建立，已配置 Supabase 公開連線資訊。':'網站已建立：本機模式；尚未配置 Supabase。');

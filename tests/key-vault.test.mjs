@@ -1,0 +1,11 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {IDBFactory} from 'fake-indexeddb';import {createKeyVault} from '../dist/key-vault.mjs';import {fresh,validateBackup} from '../dist/domain.mjs';
+test('remembered key survives a new vault instance without plaintext storage; clear removes it',async()=>{
+  const indexedDB=new IDBFactory(),key='unit-test-only-key-never-network',a=createKeyVault({indexedDB});
+  await a.remember('guest',key,{model:'auto',autoSwitch:false});
+  const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('yoyu-key-vault-v1',1);r.onsuccess=()=>resolve(r.result);r.onerror=reject;});
+  const stored=await new Promise(resolve=>{db.transaction('entries').objectStore('entries').get('guest').onsuccess=e=>resolve(e.target.result);});
+  assert.equal(stored.key.extractable,false);assert.ok(!JSON.stringify(stored).includes(key));assert.ok(stored.cipher instanceof ArrayBuffer);await assert.rejects(()=>crypto.subtle.exportKey('raw',stored.key));
+  const b=createKeyVault({indexedDB}),restored=await b.load('guest');assert.equal(restored.apiKey,key);assert.equal(restored.settings.autoSwitch,false);await b.forget('guest');assert.equal(await a.load('guest'),null);db.close();
+});
+test('saved keys are account scoped; replacing a key does not overwrite another account',async()=>{const indexedDB=new IDBFactory(),vault=createKeyVault({indexedDB});await vault.remember('a','fake-key-for-account-a');await vault.remember('b','fake-key-for-account-b');await vault.remember('a','fake-key-for-account-a-updated');assert.equal((await vault.load('a')).apiKey,'fake-key-for-account-a-updated');assert.equal((await vault.load('b')).apiKey,'fake-key-for-account-b');await vault.forget('a');assert.equal((await vault.load('b')).apiKey,'fake-key-for-account-b');});
+test('storage unavailable is explicit; keys cannot leak into sanitized backup',async()=>{const vault=createKeyVault({indexedDB:null});await assert.rejects(()=>vault.remember('guest','unit-test-no-key'),/無法記住/);const s={...fresh(),apiKey:'never-backup-this-key',keyVault:{apiKey:'never-backup-this-key'}};assert.ok(!JSON.stringify(validateBackup(s)).includes('never-backup-this-key'));});
