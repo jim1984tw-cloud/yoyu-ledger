@@ -1,4 +1,4 @@
-export const SHORTCUTS={scan:'掃發票',bills:'待繳帳單',available:'可花金額',ai:'智慧記帳',ledger:'我的帳本',plans:'分期管理',settlements:'代墊分帳',accounts:'帳戶管理',reports:'收支報表'};
+export const SHORTCUTS={stocks:'股票投資',scan:'掃發票',bills:'待繳帳單',available:'可花金額',ai:'智慧記帳',ledger:'我的帳本',plans:'分期管理',settlements:'代墊分帳',accounts:'帳戶管理',reports:'收支報表'};
 export const defaultDaily=()=>({compact:true,shortcuts:['scan','bills','available','ai'],templates:[],rules:[]});
 export const normalizeMerchant=value=>String(value||'').normalize('NFKC').toLocaleLowerCase('en-US').replace(/\s+/g,'').trim();
 export function validateDaily(raw,{accounts,books,categories}){

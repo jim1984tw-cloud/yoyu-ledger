@@ -1,3 +1,4 @@
+import {refreshStockQuotes} from './refresh-stock-quotes.mjs';
 import {build} from 'esbuild';
 import {mkdir,writeFile,readFile,readdir,unlink,rename} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
@@ -10,6 +11,7 @@ if(Boolean(url)!==Boolean(key))throw Error('SUPABASE_URL 與 SUPABASE_PUBLISHABL
 const config=url?validateCloudConfig({url,publishableKey:key,provider:process.env.SUPABASE_AUTH_PROVIDER||'github'}):null;
 await writeFile('dist/cloud-config.json',JSON.stringify(config,null,2)+'\n');
 await writeFile('dist/.nojekyll','');
+await refreshStockQuotes();
 // Give the complete browser entry a content-based URL so a returning phone does
 // not mix a new UI with old cached accounting/schema modules.
 await build({entryPoints:['dist/app.mjs'],outfile:'dist/vendor/app.next.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',minify:true,legalComments:'eof'});
@@ -23,5 +25,5 @@ await writeFile('dist/index.html',html);
 const worker=await readFile('dist/sw.js','utf8');
 const assets=JSON.parse('['+worker.match(/const ASSETS=\[([^\]]+)\]/)[1].replaceAll("'",'"')+']').filter(p=>!/^\.\/vendor\/app\./.test(p)&&!p.startsWith('./style.css?'));
 assets.push(appPath,stylePath);
-await writeFile('dist/sw.js',worker.replace(/const CACHE='[^']+'/,"const CACHE='yoyu-ledger-"+hash(app)+hash(css)+hash(JSON.stringify(config))+"'").replace(/const ASSETS=\[[^\]]+\]/,'const ASSETS='+JSON.stringify(assets)));
+await writeFile('dist/sw.js',worker.replace(/const CACHE='[^']+'/,"const CACHE='yoyu-ledger-"+hash(app)+hash(css)+hash(JSON.stringify(config))+hash(await readFile('dist/stock-quotes.json'))+"'").replace(/const ASSETS=\[[^\]]+\]/,'const ASSETS='+JSON.stringify(assets)));
 console.log(config?'網站已建立，已配置 Supabase 公開連線資訊。':'網站已建立：本機模式；尚未配置 Supabase。');

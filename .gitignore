@@ -6,3 +6,5 @@ dist/vendor/
 dist/cloud-config.json
 *.log
 .openai/
+
+dist/stock-quotes.json
